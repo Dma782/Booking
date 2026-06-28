@@ -18,7 +18,6 @@ from app.users.auth import (
     create_access_token, 
     create_refresh_token, 
     get_current_user,
-    REFRESH_TOKEN_EXPIRE_DAYS
 )
 
 router = APIRouter(prefix="/auth", tags=["Аутентификация"])
@@ -51,7 +50,7 @@ async def login_user(
     access_token = create_access_token(user.id)
     refresh_token, refresh_jti = create_refresh_token(user.id)
 
-    expire_time = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire_time = datetime.now() + timedelta(days=30)
     
     await Refresh_token_DAO.add_token(session, user_id=user.id, jti=refresh_jti, expire=expire_time)
 
@@ -83,7 +82,7 @@ async def refresh_tokens(
     new_access = create_access_token(int(user_id))
     new_refresh, new_refresh_jti = create_refresh_token(int(user_id))
     
-    expire_time = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire_time = datetime.now() + timedelta(days=30)
     await Refresh_token_DAO.add_token(session, user_id=int(user_id), jti=new_refresh_jti, expire=expire_time)
     
     return {"access_token": new_access, "refresh_token": new_refresh}

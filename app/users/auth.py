@@ -25,14 +25,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 def create_access_token(user_id: int) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode = {"sub": str(user_id), "exp": int(expire.timestamp()), "type": "access"}
+    expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode = {"sub": int(user_id), "exp": int(expire.timestamp()), "type": "access"}
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def create_refresh_token(user_id: int) -> tuple[str, str]:
     jti = str(uuid.uuid4())
-    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode = {"sub": str(user_id), "exp": int(expire.timestamp()), "jti": jti, "type": "refresh"}
+    expire = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode = {"sub": int(user_id), "exp": int(expire.timestamp()), "jti": jti, "type": "refresh"}
     token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return token, jti
 
@@ -47,7 +47,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSe
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
+        user_id: int = payload.get("sub")
         token_type: str = payload.get("type")
 
         if user_id is None or token_type != "access":
