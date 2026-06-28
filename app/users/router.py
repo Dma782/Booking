@@ -1,0 +1,111 @@
+from fastapi import APIRouter, Depends, HTTPException, status, Body
+from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
+
+from app.database import get_db_session
+from app.config import settings
+
+
+from app.users.schemas import UserAuthSchema, TokenResponseSchema, UserResponseSchema
+from app.users.dao import UsersDAO, Refresh_token_DAO
+from app.users.models import User
+
+
+from app.users.auth import (
+    get_password_hash, 
+    verify_password, 
+    create_access_token, 
+    create_refresh_token, 
+    get_current_user,
+    REFRESH_TOKEN_EXPIRE_DAYS
+)
+
+router = APIRouter(prefix="/auth", tags=["Аутентификация"])
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register_user(
+    user_data: UserAuthSchema, 
+    session: AsyncSession = Depends(get_db_session)
+):
+    existing_user = await UsersDAO.find_by_email(session, user_data.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already exist")
+    hashed_pwd = get_password_hash(user_data.password)
+    await UsersDAO.add_user(session, email=user_data.email, hashed_password=hashed_pwd)
+    
+    return {"message": "Succesfull register"}
+
+
+@router.post("/login", response_model=TokenResponseSchema)
+async def login_user(
+    user_data: UserAuthSchema, 
+    session: AsyncSession = Depends(get_db_session)
+    ):
+    user = await UsersDAO.find_by_email(session, user_data.email)
+    if not user or not verify_password(user_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Неверная почта или пароль")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Пользователь деактивирован")
+
+    access_token = create_access_token(user.id)
+    refresh_token, refresh_jti = create_refresh_token(user.id)
+
+    expire_time = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    
+    await Refresh_token_DAO.add_token(session, user_id=user.id, jti=refresh_jti, expire=expire_time)
+
+    return {"access_token": access_token, "refresh_token": refresh_token}
+
+@router.post("/refresh", response_model=TokenResponseSchema)
+async def refresh_tokens(
+    refresh_token: str = Body(..., embed=True), 
+    session: AsyncSession = Depends(get_db_session)
+):
+    try:
+        payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        jti: str = payload.get("jti")
+        token_type: str = payload.get("type")
+        user_id: str = payload.get("sub")
+        
+        if token_type != "refresh" or not jti or not user_id:
+            raise HTTPException(status_code=401, detail="Невалидный refresh токен")
+            
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Refresh токен истек или поврежден")
+
+    db_token = await Refresh_token_DAO.find_by_jti(session, jti)
+    if not db_token:
+        raise HTTPException(status_code=401, detail="Токен не найден или уже был использован")
+        
+    await Refresh_token_DAO.delete_token_by_jti(session, jti)
+    
+    new_access = create_access_token(int(user_id))
+    new_refresh, new_refresh_jti = create_refresh_token(int(user_id))
+    
+    expire_time = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    await Refresh_token_DAO.add_token(session, user_id=int(user_id), jti=new_refresh_jti, expire=expire_time)
+    
+    return {"access_token": new_access, "refresh_token": new_refresh}
+
+
+@router.post("/logout")
+async def logout_user(
+    refresh_token: str = Body(embed=True), 
+    session: AsyncSession = Depends(get_db_session)
+):
+    try:
+        payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        jti: str = payload.get("jti")
+        if jti:
+            await Refresh_token_DAO.delete_token_by_jti(session, jti)
+    except JWTError:
+        pass
+        
+    return {"message": "Вы успешно вышли из системы"}
+
+
+@router.get("/me", response_model=UserResponseSchema)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
