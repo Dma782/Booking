@@ -23,5 +23,7 @@ class Room(Base):
     name: Mapped[str]
     price: Mapped[int]
     quantity: Mapped[int]
+    capacity: Mapped[int] = mapped_column(default=1)
+    services: Mapped[list[str]] = mapped_column(JSON, default=list)
 
     hotel: Mapped["Hotel"] = relationship(back_populates="rooms")

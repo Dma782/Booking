@@ -3,6 +3,7 @@ from sqlalchemy import ForeignKey, JSON
 from app.database import Base
 from datetime import datetime
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -15,6 +16,7 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
 
+
 class Refresh_token(Base):
     __tablename__ = "refresh_tokens"
 
@@ -24,4 +26,3 @@ class Refresh_token(Base):
     jti: Mapped[str] = mapped_column(unique=True, index=True)
 
     user: Mapped["User"] = relationship(back_populates="refresh_tokens")
-
