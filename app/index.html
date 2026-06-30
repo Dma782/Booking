@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Реестр — бронирование отелей</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Spectral+SC:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A4A;
+    --sand:#EFE6D6;
+    --paper:#FAF7F1;
+    --terracotta:#C2603F;
+    --terracotta-deep:#9C4830;
+    --line:#D8CCB4;
+    --green:#3F6B4F;
+    --red:#A8412E;
+    --muted:#7C7461;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(27,42,74,0.06) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+  ::selection{background:var(--terracotta);color:#fff;}
+
+  header.top{
+    border-bottom:2px solid var(--ink);
+    padding:28px 40px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+  }
+  .brand .mark{
+    font-family:'Spectral SC', serif;
+    font-size:13px;
+    letter-spacing:0.18em;
+    border:1px solid var(--ink);
+    padding:4px 9px;
+    border-radius:2px;
+    color:var(--ink);
+  }
+  .brand h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:30px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .brand .sub{
+    font-size:12.5px;
+    color:var(--muted);
+    margin-top:2px;
+    letter-spacing:0.02em;
+  }
+
+  .auth-strip{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+  }
+  .who{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:#fff;
+  }
+  .who .dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
+  .who.off .dot{background:var(--muted);}
+
+  button{
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+  }
+  .btn{
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    padding:9px 16px;
+    border-radius:3px;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.01em;
+    transition:transform .08s ease, background .15s ease;
+  }
+  .btn:hover{background:var(--terracotta-deep);}
+  .btn:active{transform:translateY(1px);}
+  .btn.ghost{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--ink);
+  }
+  .btn.ghost:hover{background:var(--ink);color:#fff;}
+  .btn.danger{background:var(--red);}
+  .btn.danger:hover{background:#7e2e20;}
+  .btn.sm{padding:6px 11px;font-size:12px;}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    padding:0 40px;
+    margin-top:18px;
+    flex-wrap:wrap;
+  }
+  nav.tabs button{
+    background:transparent;
+    border:none;
+    border-bottom:3px solid transparent;
+    padding:11px 18px;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--muted);
+    letter-spacing:0.01em;
+  }
+  nav.tabs button.active{
+    color:var(--ink);
+    border-bottom-color:var(--terracotta);
+  }
+  nav.tabs button:hover{color:var(--ink);}
+
+  main{
+    padding:30px 40px 80px;
+    max-width:1180px;
+  }
+  section.panel{display:none;}
+  section.panel.active{display:block;}
+
+  .eyebrow{
+    font-family:'Spectral SC', serif;
+    font-size:11.5px;
+    letter-spacing:0.16em;
+    color:var(--terracotta-deep);
+    margin:0 0 6px;
+  }
+  h2.section-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:24px;
+    margin:0 0 22px;
+  }
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+  @media (max-width:880px){.grid2{grid-template-columns:1fr;}}
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:22px;
+  }
+  .card h3{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    margin:0 0 14px;
+    font-weight:600;
+  }
+
+  label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin:12px 0 4px;
+    font-weight:600;
+    letter-spacing:0.01em;
+  }
+  label:first-of-type{margin-top:0;}
+  input, select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    font-size:13.5px;
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  input:focus, select:focus{
+    outline:2px solid var(--terracotta);
+    outline-offset:1px;
+    background:#fff;
+  }
+  .row{display:flex;gap:10px;}
+  .row > div{flex:1;}
+  .form-actions{margin-top:16px;display:flex;gap:10px;align-items:center;}
+
+  .msg{
+    font-size:12.5px;
+    margin-top:10px;
+    padding:8px 10px;
+    border-radius:3px;
+    display:none;
+  }
+  .msg.show{display:block;}
+  .msg.ok{background:#E7F0E9;color:var(--green);border:1px solid #BFD8C6;}
+  .msg.err{background:#F6E4DF;color:var(--red);border:1px solid #E3BBAE;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  th{
+    text-align:left;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    border-bottom:1px solid var(--ink);
+    padding:8px 8px;
+    font-weight:600;
+  }
+  td{
+    padding:10px 8px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  tr:hover td{background:rgba(194,96,63,0.04);}
+  .tag{
+    display:inline-block;
+    font-size:10.5px;
+    padding:2px 7px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin:1px 3px 1px 0;
+    color:var(--muted);
+  }
+  .empty{
+    color:var(--muted);
+    font-size:13px;
+    padding:18px 0;
+    font-style:italic;
+  }
+
+  /* signature element: ticket / key-tag card for rooms & bookings */
+  .key-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(270px,1fr));
+    gap:18px;
+    margin-top:18px;
+  }
+  .key-tag{
+    position:relative;
+    background:#fff;
+    border:1px solid var(--ink);
+    border-radius:4px;
+    padding:18px 18px 16px;
+    overflow:hidden;
+  }
+  .key-tag::before{
+    content:"";
+    position:absolute;
+    top:50%;
+    left:-9px;
+    width:18px;
+    height:18px;
+    background:var(--paper);
+    border:1px solid var(--ink);
+    border-radius:50%;
+    transform:translateY(-50%);
+  }
+  .key-tag .hole{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    border:1.5px solid var(--ink);
+  }
+  .key-tag .room-name{
+    font-family:'Fraunces', serif;
+    font-size:18px;
+    font-weight:600;
+    margin:0 0 2px;
+    padding-right:26px;
+  }
+  .key-tag .hotel-name{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .key-tag .price{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    color:var(--terracotta-deep);
+    font-weight:600;
+  }
+  .key-tag .price span{font-size:11px;color:var(--muted);font-family:'Inter';font-weight:500;}
+  .key-tag .meta{
+    display:flex;
+    gap:14px;
+    font-size:12px;
+    color:var(--muted);
+    margin:8px 0 10px;
+  }
+  .key-tag .services{margin-bottom:10px;}
+  .key-tag .btn{width:100%;}
+
+  .status-stamp{
+    display:inline-block;
+    font-family:'Spectral SC', serif;
+    font-size:10.5px;
+    letter-spacing:0.1em;
+    padding:3px 9px;
+    border:1.5px solid currentColor;
+    border-radius:2px;
+    transform:rotate(-2deg);
+  }
+  .status-stamp.pending,.status-stamp.confirmed{color:var(--green);}
+  .status-stamp.cancelled{color:var(--red);}
+
+  .hint{font-size:12px;color:var(--muted);margin-top:4px;}
+  .divider{height:1px;background:var(--line);margin:22px 0;}
+  .small-note{font-size:11.5px;color:var(--muted);margin-top:24px;}
+  code{background:var(--sand);padding:1px 5px;border-radius:2px;font-size:12px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="mark">№</span>
+    <div>
+      <h1>Реестр</h1>
+      <div class="sub">витрина к вашему FastAPI-бекенду · localhost:8000</div>
+    </div>
+  </div>
+  <div class="auth-strip">
+    <div class="who off" id="whoBox">
+      <span class="dot"></span>
+      <span id="whoText">не авторизован</span>
+    </div>
+    <button class="btn ghost sm" id="logoutBtn" style="display:none">Выйти</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="auth" class="active">Аккаунт</button>
+  <button data-tab="hotels">Отели</button>
+  <button data-tab="rooms">Номера</button>
+  <button data-tab="search">Поиск и бронь</button>
+  <button data-tab="bookings">Мои брони</button>
+</nav>
+
+<main>
+
+  <!-- AUTH -->
+  <section class="panel active" id="panel-auth">
+    <p class="eyebrow">Вход в систему</p>
+    <h2 class="section-title">Аккаунт</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Войти</h3>
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@mail.com">
+        <label>Пароль</label>
+        <input type="password" id="loginPassword" placeholder="••••••">
+        <div class="form-actions">
+          <button class="btn" id="loginBtn">Войти</button>
+        </div>
+        <div class="msg" id="loginMsg"></div>
+      </div>
+      <div class="card">
+        <h3>Зарегистрироваться</h3>
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="you@mail.com">
+        <label>Пароль (от 6 символов)</label>
+        <input type="password" id="regPassword" placeholder="••••••">
+        <div class="form-actions">
+          <button class="btn ghost" id="regBtn">Создать аккаунт</button>
+        </div>
+        <div class="msg" id="regMsg"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="card" style="max-width:480px">
+      <h3>Текущий пользователь</h3>
+      <div id="meBox" class="empty">Выполните вход, чтобы увидеть данные профиля.</div>
+      <div class="form-actions">
+        <button class="btn ghost sm" id="refreshMeBtn">Обновить данные</button>
+        <button class="btn ghost sm" id="forceRefreshBtn">Обновить токен вручную</button>
+      </div>
+      <div class="msg" id="meMsg"></div>
+    </div>
+  </section>
+
+  <!-- HOTELS -->
+  <section class="panel" id="panel-hotels">
+    <p class="eyebrow">Каталог</p>
+    <h2 class="section-title">Отели</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Добавить отель</h3>
+        <label>Название</label>
+        <input id="hotelName" placeholder="Например: Гранд Палас">
+        <label>Локация</label>
+        <input id="hotelLocation" placeholder="Город, адрес">
+        <label>Услуги (через запятую)</label>
+        <input id="hotelServices" placeholder="wifi, парковка, завтрак">
+        <div class="form-actions">
+          <button class="btn" id="createHotelBtn">Создать</button>
+        </div>
+        <div class="msg" id="hotelMsg"></div>
+      </div>
+      <div class="card">
+        <h3>Список отелей</h3>
+        <button class="btn ghost sm" id="reloadHotelsBtn" style="margin-bottom:14px">Обновить список</button>
+        <div id="hotelsList"><div class="empty">Загрузка…</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROOMS -->
+  <section class="panel" id="panel-rooms">
+    <p class="eyebrow">Номерной фонд</p>
+    <h2 class="section-title">Номера</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Добавить номер</h3>
+        <label>Отель</label>
+        <select id="roomHotelId"></select>
+        <label>Название номера</label>
+        <input id="roomName" placeholder="Например: Делюкс с видом на море">
+        <div class="row">
+          <div>
+            <label>Цена / ночь</label>
+            <input type="number" id="roomPrice" min="1" placeholder="5000">
+          </div>
+          <div>
+            <label>Количество</label>
+            <input type="number" id="roomQuantity" min="1" placeholder="3">
+          </div>
+          <div>
+            <label>Вместимость</label>
+            <input type="number" id="roomCapacity" min="1" value="1">
+          </div>
+        </div>
+        <label>Услуги (через запятую)</label>
+        <input id="roomServices" placeholder="wifi, кондиционер">
+        <div class="form-actions">
+          <button class="btn" id="createRoomBtn">Создать</button>
+        </div>
+        <div class="msg" id="roomMsg"></div>
+      </div>
+      <div class="card">
+        <h3>Все номера</h3>
+        <button class="btn ghost sm" id="reloadRoomsBtn" style="margin-bottom:14px">Обновить список</button>
+        <div id="roomsList"><div class="empty">Загрузка…</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEARCH / BOOK -->
+  <section class="panel" id="panel-search">
+    <p class="eyebrow">Бронирование</p>
+    <h2 class="section-title">Поиск свободных номеров</h2>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Заезд</label>
+          <input type="date" id="searchFrom">
+        </div>
+        <div>
+          <label>Выезд</label>
+          <input type="date" id="searchTo">
+        </div>
+        <div>
+          <label>Гостей</label>
+          <input type="number" id="searchGuests" min="1" value="1">
+        </div>
+        <div>
+          <label>Город (необязательно)</label>
+          <input id="searchLocation" placeholder="Например: Сочи">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn" id="searchBtn">Искать</button>
+      </div>
+      <div class="msg" id="searchMsg"></div>
+    </div>
+
+    <div id="searchResults" class="key-grid"></div>
+  </section>
+
+  <!-- BOOKINGS -->
+  <section class="panel" id="panel-bookings">
+    <p class="eyebrow">Личный кабинет</p>
+    <h2 class="section-title">Мои бронирования</h2>
+    <button class="btn ghost sm" id="reloadBookingsBtn" style="margin-bottom:14px">Обновить список</button>
+    <div id="bookingsMsg" class="msg"></div>
+    <div id="bookingsList"></div>
+  </section>
+
+  <p class="small-note">Бекенд ожидается на <code>http://localhost:8000</code>. Если запросы падают с ошибкой CORS — добавьте на бекенде <code>CORSMiddleware</code> с разрешённым источником этой страницы.</p>
+</main>
+
+<script>
+const API_BASE = "http://localhost:8000";
+
+/* ---------------- token storage ---------------- */
+const Auth = {
+  access: localStorage.getItem("access_token") || null,
+  refresh: localStorage.getItem("refresh_token") || null,
+  setTokens(access, refresh){
+    this.access = access; this.refresh = refresh;
+    localStorage.setItem("access_token", access);
+    localStorage.setItem("refresh_token", refresh);
+    renderAuthState();
+  },
+  clear(){
+    this.access = null; this.refresh = null;
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    renderAuthState();
+  },
+  get isAuthed(){ return !!this.access; }
+};
+
+/* ---------------- core fetch wrapper with auto-refresh ---------------- */
+async function api(path, { method="GET", body=null, auth=false, form=false } = {}){
+  const doFetch = async (token) => {
+    const headers = {};
+    if (!form) headers["Content-Type"] = "application/json";
+    if (auth && token) headers["Authorization"] = `Bearer ${token}`;
+    return fetch(API_BASE + path, {
+      method,
+      headers,
+      body: body ? (form ? body : JSON.stringify(body)) : undefined
+    });
+  };
+
+  let res = await doFetch(Auth.access);
+
+  if (res.status === 401 && auth && Auth.refresh){
+    const refreshed = await tryRefreshToken();
+    if (refreshed){
+      res = await doFetch(Auth.access);
+    }
+  }
+
+  let data = null;
+  try { data = await res.json(); } catch(e){ /* empty body */ }
+
+  if (!res.ok){
+    const detail = data && (data.detail || JSON.stringify(data));
+    throw new Error(typeof detail === "string" ? detail : formatValidationError(data));
+  }
+  return data;
+}
+
+function formatValidationError(data){
+  if (data && Array.isArray(data.detail)){
+    return data.detail.map(d => `${(d.loc||[]).join(".")}: ${d.msg}`).join("; ");
+  }
+  return "Ошибка запроса";
+}
+
+async function tryRefreshToken(){
+  try{
+    const res = await fetch(API_BASE + "/auth/refresh", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ refresh_token: Auth.refresh })
+    });
+    if (!res.ok) { Auth.clear(); return false; }
+    const data = await res.json();
+    Auth.setTokens(data.access_token, data.refresh_token);
+    return true;
+  }catch(e){
+    Auth.clear();
+    return false;
+  }
+}
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll("nav.tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll("section.panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+    if (btn.dataset.tab === "hotels") loadHotels();
+    if (btn.dataset.tab === "rooms") { loadHotelOptions(); loadRooms(); }
+    if (btn.dataset.tab === "bookings") loadBookings();
+  });
+});
+
+/* ---------------- msg helper ---------------- */
+function showMsg(el, text, ok=true){
+  el.textContent = text;
+  el.className = "msg show " + (ok ? "ok" : "err");
+}
+
+/* ================= AUTH PANEL ================= */
+function renderAuthState(){
+  const whoBox = document.getElementById("whoBox");
+  const whoText = document.getElementById("whoText");
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (Auth.isAuthed){
+    whoBox.classList.remove("off");
+    whoText.textContent = "сессия активна";
+    logoutBtn.style.display = "inline-block";
+    loadMe();
+  } else {
+    whoBox.classList.add("off");
+    whoText.textContent = "не авторизован";
+    logoutBtn.style.display = "none";
+    document.getElementById("meBox").innerHTML = '<div class="empty">Выполните вход, чтобы увидеть данные профиля.</div>';
+  }
+}
+
+document.getElementById("regBtn").addEventListener("click", async () => {
+  const email = document.getElementById("regEmail").value.trim();
+  const password = document.getElementById("regPassword").value;
+  const msg = document.getElementById("regMsg");
+  try{
+    await api("/auth/register", { method:"POST", body:{ email, password } });
+    showMsg(msg, "Аккаунт создан. Теперь войдите слева.", true);
+  }catch(e){ showMsg(msg, e.message, false); }
+});
+
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const msg = document.getElementById("loginMsg");
+  try{
+    const form = new URLSearchParams();
+    form.set("username", email);
+    form.set("password", password);
+    form.set("grant_type", "password");
+    const data = await api("/auth/login", { method:"POST", body: form, form:true });
+    Auth.setTokens(data.access_token, data.refresh_token);
+    showMsg(msg, "Вход выполнен.", true);
+  }catch(e){ showMsg(msg, e.message, false); }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  try{
+    if (Auth.refresh){
+      await api("/auth/logout", { method:"POST", body:{ refresh_token: Auth.refresh } });
+    }
+  }catch(e){ /* ignore */ }
+  Auth.clear();
+});
+
+document.getElementById("refreshMeBtn").addEventListener("click", loadMe);
+document.getElementById("forceRefreshBtn").addEventListener("click", async () => {
+  const msg = document.getElementById("meMsg");
+  if (!Auth.refresh){ showMsg(msg, "Нет refresh-токена.", false); return; }
+  const ok = await tryRefreshToken();
+  showMsg(msg, ok ? "Токен обновлён." : "Не удалось обновить токен.", ok);
+});
+
+async function loadMe(){
+  const box = document.getElementById("meBox");
+  if (!Auth.isAuthed) return;
+  try{
+    const me = await api("/auth/me", { auth:true });
+    box.innerHTML = `
+      <table>
+        <tr><th>ID</th><td>${me.id}</td></tr>
+        <tr><th>Email</th><td>${me.email}</td></tr>
+        <tr><th>Активен</th><td>${me.is_active ? "да" : "нет"}</td></tr>
+      </table>`;
+  }catch(e){
+    box.innerHTML = `<div class="empty">${e.message}</div>`;
+  }
+}
+
+/* ================= HOTELS PANEL ================= */
+document.getElementById("createHotelBtn").addEventListener("click", async () => {
+  const msg = document.getElementById("hotelMsg");
+  const name = document.getElementById("hotelName").value.trim();
+  const location = document.getElementById("hotelLocation").value.trim();
+  const services = document.getElementById("hotelServices").value
+    .split(",").map(s=>s.trim()).filter(Boolean);
+  try{
+    await api("/hotels", { method:"POST", body:{ name, location, services } });
+    showMsg(msg, "Отель создан.", true);
+    document.getElementById("hotelName").value = "";
+    document.getElementById("hotelLocation").value = "";
+    document.getElementById("hotelServices").value = "";
+    loadHotels();
+  }catch(e){ showMsg(msg, e.message, false); }
+});
+
+document.getElementById("reloadHotelsBtn").addEventListener("click", loadHotels);
+
+async function loadHotels(){
+  const box = document.getElementById("hotelsList");
+  box.innerHTML = '<div class="empty">Загрузка…</div>';
+  try{
+    const hotels = await api("/hotels");
+    if (!hotels.length){ box.innerHTML = '<div class="empty">Отелей пока нет.</div>'; return; }
+    box.innerHTML = `
+      <table>
+        <thead><tr><th>ID</th><th>Название</th><th>Локация</th><th>Услуги</th></tr></thead>
+        <tbody>
+          ${hotels.map(h => `
+            <tr>
+              <td>${h.id}</td>
+              <td>${h.name}</td>
+              <td>${h.location}</td>
+              <td>${(h.services||[]).map(s=>`<span class="tag">${s}</span>`).join("") || "—"}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+  }catch(e){
+    box.innerHTML = `<div class="empty">${e.message}</div>`;
+  }
+}
+
+/* ================= ROOMS PANEL ================= */
+async function loadHotelOptions(){
+  const select = document.getElementById("roomHotelId");
+  try{
+    const hotels = await api("/hotels");
+    select.innerHTML = hotels.map(h => `<option value="${h.id}">${h.name} (#${h.id})</option>`).join("");
+  }catch(e){
+    select.innerHTML = `<option>не удалось загрузить</option>`;
+  }
+}
+
+document.getElementById("createRoomBtn").addEventListener("click", async () => {
+  const msg = document.getElementById("roomMsg");
+  const hotel_id = parseInt(document.getElementById("roomHotelId").value, 10);
+  const name = document.getElementById("roomName").value.trim();
+  const price = parseInt(document.getElementById("roomPrice").value, 10);
+  const quantity = parseInt(document.getElementById("roomQuantity").value, 10);
+  const capacity = parseInt(document.getElementById("roomCapacity").value, 10) || 1;
+  const services = document.getElementById("roomServices").value
+    .split(",").map(s=>s.trim()).filter(Boolean);
+  try{
+    await api("/hotels/rooms", { method:"POST", body:{ hotel_id, name, price, quantity, capacity, services } });
+    showMsg(msg, "Номер создан.", true);
+    document.getElementById("roomName").value = "";
+    document.getElementById("roomPrice").value = "";
+    document.getElementById("roomQuantity").value = "";
+    document.getElementById("roomServices").value = "";
+    loadRooms();
+  }catch(e){ showMsg(msg, e.message, false); }
+});
+
+document.getElementById("reloadRoomsBtn").addEventListener("click", loadRooms);
+
+async function loadRooms(){
+  const box = document.getElementById("roomsList");
+  box.innerHTML = '<div class="empty">Загрузка…</div>';
+  try{
+    const rooms = await api("/hotels/rooms");
+    if (!rooms.length){ box.innerHTML = '<div class="empty">Номеров пока нет.</div>'; return; }
+    box.innerHTML = `
+      <table>
+        <thead><tr><th>ID</th><th>Отель</th><th>Название</th><th>Цена</th><th>Кол-во</th><th>Вмест.</th><th>Услуги</th></tr></thead>
+        <tbody>
+          ${rooms.map(r => `
+            <tr>
+              <td>${r.id}</td>
+              <td>#${r.hotel_id}</td>
+              <td>${r.name}</td>
+              <td>${r.price} ₽</td>
+              <td>${r.quantity}</td>
+              <td>${r.capacity}</td>
+              <td>${(r.services||[]).map(s=>`<span class="tag">${s}</span>`).join("") || "—"}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+  }catch(e){
+    box.innerHTML = `<div class="empty">${e.message}</div>`;
+  }
+}
+
+/* ================= SEARCH / BOOK PANEL ================= */
+document.getElementById("searchBtn").addEventListener("click", async () => {
+  const msg = document.getElementById("searchMsg");
+  const results = document.getElementById("searchResults");
+  const from = document.getElementById("searchFrom").value;
+  const to = document.getElementById("searchTo").value;
+  const guests = document.getElementById("searchGuests").value || 1;
+  const location = document.getElementById("searchLocation").value.trim();
+
+  if (!from || !to){ showMsg(msg, "Укажите даты заезда и выезда.", false); return; }
+
+  const params = new URLSearchParams();
+  params.set("date_from", new Date(from).toISOString());
+  params.set("date_to", new Date(to).toISOString());
+  params.set("guests", guests);
+  if (location) params.set("location", location);
+
+  msg.classList.remove("show");
+  results.innerHTML = '<div class="empty">Ищем…</div>';
+  try{
+    const rooms = await api("/bookings/rooms?" + params.toString());
+    if (!rooms.length){
+      results.innerHTML = '<div class="empty">Свободных номеров по заданным условиям не найдено.</div>';
+      return;
+    }
+    results.innerHTML = rooms.map(r => `
+      <div class="key-tag">
+        <div class="hole"></div>
+        <p class="room-name">${r.name}</p>
+        <p class="hotel-name">${r.hotel_name} · #${r.hotel_id}</p>
+        <div class="meta">
+          <span>до ${r.capacity} гостей</span>
+          <span>свободно: ${r.free_count}</span>
+        </div>
+        <div class="services">${(r.services||[]).map(s=>`<span class="tag">${s}</span>`).join("") || ""}</div>
+        <div class="price">${r.price} ₽ <span>/ ночь</span></div>
+        <div style="margin-top:12px">
+          <button class="btn book-btn" data-room="${r.id}" ${Auth.isAuthed ? "" : "disabled"}>
+            ${Auth.isAuthed ? "Забронировать" : "Войдите, чтобы бронировать"}
+          </button>
+        </div>
+      </div>`).join("");
+
+    results.querySelectorAll(".book-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.textContent = "Бронируем…";
+        try{
+          await api("/bookings", {
+            method:"POST",
+            auth:true,
+            body:{
+              room_id: parseInt(btn.dataset.room, 10),
+              date_from: new Date(from).toISOString(),
+              date_to: new Date(to).toISOString()
+            }
+          });
+          btn.textContent = "Забронировано ✓";
+          showMsg(msg, "Бронирование создано. Смотрите вкладку «Мои брони».", true);
+        }catch(e){
+          btn.disabled = false;
+          btn.textContent = "Забронировать";
+          showMsg(msg, e.message, false);
+        }
+      });
+    });
+  }catch(e){
+    results.innerHTML = "";
+    showMsg(msg, e.message, false);
+  }
+});
+
+/* ================= BOOKINGS PANEL ================= */
+document.getElementById("reloadBookingsBtn").addEventListener("click", loadBookings);
+
+async function loadBookings(){
+  const box = document.getElementById("bookingsList");
+  const msg = document.getElementById("bookingsMsg");
+  msg.classList.remove("show");
+  if (!Auth.isAuthed){
+    box.innerHTML = '<div class="empty">Войдите в аккаунт, чтобы увидеть свои бронирования.</div>';
+    return;
+  }
+  box.innerHTML = '<div class="empty">Загрузка…</div>';
+  try{
+    const bookings = await api("/bookings/me", { auth:true });
+    if (!bookings.length){
+      box.innerHTML = '<div class="empty">У вас пока нет бронирований.</div>';
+      return;
+    }
+    box.innerHTML = `<div class="key-grid">${bookings.map(b => `
+      <div class="key-tag">
+        <div class="hole"></div>
+        <p class="room-name">Бронь #${b.id}</p>
+        <p class="hotel-name">Номер #${b.room_id}</p>
+        <div class="meta">
+          <span>${fmtDate(b.date_from)} → ${fmtDate(b.date_to)}</span>
+        </div>
+        <div class="price">${b.total_price} ₽</div>
+        <div style="margin:10px 0">
+          <span class="status-stamp ${b.status}">${b.status}</span>
+        </div>
+        ${b.status !== "cancelled" ? `<button class="btn danger sm cancel-btn" data-id="${b.id}">Отменить бронь</button>` : ""}
+      </div>`).join("")}</div>`;
+
+    box.querySelectorAll(".cancel-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.textContent = "Отменяем…";
+        try{
+          await api(`/bookings/${btn.dataset.id}/cancel`, { method:"PATCH", auth:true });
+          loadBookings();
+        }catch(e){
+          showMsg(msg, e.message, false);
+          btn.disabled = false;
+          btn.textContent = "Отменить бронь";
+        }
+      });
+    });
+  }catch(e){
+    box.innerHTML = "";
+    showMsg(msg, e.message, false);
+  }
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString("ru-RU", { day:"2-digit", month:"short", year:"numeric" });
+}
+
+/* ---------------- init ---------------- */
+renderAuthState();
+loadHotels();
+</script>
+</body>
+</html>
