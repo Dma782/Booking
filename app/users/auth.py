@@ -20,7 +20,6 @@ REFRESH_TOKEN_EXPIRE_DAYS = 30
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
-
 def utc_now_naive() -> datetime:
     return utc_now().replace(tzinfo=None)
 
@@ -36,7 +35,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(user_id: int) -> str:
     expire = utc_now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {"sub": str(user_id), "exp": int(expire.timestamp()), "type": "access"}
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    acces_token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return acces_token
 
 
 def create_refresh_token(user_id: int) -> tuple[str, str]:
@@ -48,8 +48,8 @@ def create_refresh_token(user_id: int) -> tuple[str, str]:
         "jti": jti,
         "type": "refresh",
     }
-    token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return token, jti
+    refresh_token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return refresh_token, jti
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")

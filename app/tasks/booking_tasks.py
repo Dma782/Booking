@@ -1,7 +1,6 @@
 from app.tasks.celery import celery_app
+from app.tasks.email_services import send_booking_email
 
-
-@celery_app.task(name="send_booking_confirmation")
-def send_booking_confirmation(booking_id: int) -> dict:
-    # Here you can generate a PDF ticket, send email and update bonuses.
-    return {"booking_id": booking_id, "status": "processed"}
+@celery_app.task
+def send_booking_confirmation(email: str):
+    send_booking_email(email)

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bookings.schemas import (
-    AvailableRoomResponse,
+    AvailableRoomResponse, 
     BookingCreate,
     BookingResponse,
     BookingSearchParams,
@@ -53,7 +53,7 @@ async def create_booking(
         data=data,
     )
     try:
-        send_booking_confirmation.delay(booking.id)
+        send_booking_confirmation.delay(current_user.email)
     except Exception:
         pass
     return booking

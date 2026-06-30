@@ -38,19 +38,6 @@ async def create_room(
         services=room_data.services,
     )
 
-
-@router.get("/get_hotels", response_model=List[SHotelResponse])
-async def get_all_hotels(session: AsyncSession = Depends(get_db_session)):
-    hotels = await HotelDAO.get_all(session=session)
-    return hotels
-
-
-@router.get("/get_rooms", response_model=List[SRoomResponse])
-async def get_all_rooms(session: AsyncSession = Depends(get_db_session)):
-    rooms = await RoomDAO.get_all(session=session)
-    return rooms
-
-
 @router.get("", response_model=List[SHotelResponse])
 async def list_hotels(session: AsyncSession = Depends(get_db_session)):
     return await HotelDAO.get_all(session=session)

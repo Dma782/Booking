@@ -24,3 +24,6 @@ class UserResponseSchema(BaseModel):
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+class RefreshTokenRequestSchema(BaseModel):
+    refresh_token: str = Field(...)

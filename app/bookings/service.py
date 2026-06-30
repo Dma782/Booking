@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.bookings.dao import ACTIVE_STATUS, BookingDAO
 from app.bookings.models import Booking
 from app.bookings.schemas import (
-    AvailableRoomResponse,
+    AvailableRoomResponse, 
     BookingCreate,
     BookingSearchParams,
 )

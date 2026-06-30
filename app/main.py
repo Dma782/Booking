@@ -4,7 +4,7 @@ from app.users.router import router as auth_router
 from app.bookings.router import router as booking_router
 
 app = FastAPI()
-app.include_router(hotel_router)
+app.include_router(hotel_router) 
 app.include_router(auth_router)
 app.include_router(booking_router)
 

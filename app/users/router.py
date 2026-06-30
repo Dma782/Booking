@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.database import get_db_session
 from app.config import settings
 
 
-from app.users.schemas import UserAuthSchema, TokenResponseSchema, UserResponseSchema
+from app.users.schemas import UserAuthSchema, TokenResponseSchema, UserResponseSchema, RefreshTokenRequestSchema
 from app.users.dao import UsersDAO, Refresh_token_DAO
 from app.users.models import User
 
@@ -43,7 +43,7 @@ async def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: AsyncSession = Depends(get_db_session),
 ):
-    user = await UsersDAO.find_by_email(session, form_data.username)
+    user = await UsersDAO.find_by_email(session, form_data.username) # в форм_дате в юзернейм мы вводим емейл
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Неверная почта или пароль")
     if not user.is_active:
@@ -63,22 +63,24 @@ async def login_user(
 
 @router.post("/refresh", response_model=TokenResponseSchema)
 async def refresh_tokens(
-    refresh_token: str = Body(..., embed=True),
+    request_refresh_token: RefreshTokenRequestSchema,
     session: AsyncSession = Depends(get_db_session),
 ):
     try:
-        payload = jwt.decode(
-            refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        refresh_token = jwt.decode(
+            request_refresh_token.refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        jti: str = payload.get("jti")
-        token_type: str = payload.get("type")
-        user_id: str = payload.get("sub")
+        jti: str = refresh_token.get("jti")
+        token_type: str = refresh_token.get("type")
+        user_id: str = refresh_token.get("sub")
 
         if token_type != "refresh" or not jti or not user_id:
-            raise HTTPException(status_code=401, detail="Невалидный refresh токен")
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
 
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Refresh токен истек")
     except JWTError:
-        raise HTTPException(status_code=401, detail="Refresh токен истек или поврежден")
+        raise HTTPException(status_code=401, detail="Refresh token expired")
 
     try:
         db_token = await Refresh_token_DAO.find_by_jti_for_update(session, jti)
@@ -105,9 +107,6 @@ async def refresh_tokens(
             commit=False,
         )
         await session.commit()
-    except HTTPException:
-        await session.rollback()
-        raise
     except Exception:
         await session.rollback()
         raise
@@ -121,10 +120,10 @@ async def logout_user(
     session: AsyncSession = Depends(get_db_session),
 ):
     try:
-        payload = jwt.decode(
+        refresh_token = jwt.decode(
             refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        jti: str = payload.get("jti")
+        jti: str = refresh_token.get("jti")
         if jti:
             await Refresh_token_DAO.delete_token_by_jti(session, jti)
     except JWTError:

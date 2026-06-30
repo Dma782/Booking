@@ -8,7 +8,7 @@ class Hotel(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
-    location: Mapped[str]
+    location: Mapped[str] = mapped_column(index=True)
     services: Mapped[list[str]] = mapped_column(JSON)
 
     rooms: Mapped[list["Room"]] = relationship(back_populates="hotel")
@@ -21,9 +21,9 @@ class Room(Base):
     hotel_id: Mapped[int] = mapped_column(ForeignKey("hotels.id"))
 
     name: Mapped[str]
-    price: Mapped[int]
+    price: Mapped[int] = mapped_column(index=True)
     quantity: Mapped[int]
-    capacity: Mapped[int] = mapped_column(default=1)
+    capacity: Mapped[int] = mapped_column(default=1, index=True)
     services: Mapped[list[str]] = mapped_column(JSON, default=list)
 
     hotel: Mapped["Hotel"] = relationship(back_populates="rooms")

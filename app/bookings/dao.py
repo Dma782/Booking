@@ -10,14 +10,16 @@ ACTIVE_STATUS = "confirmed"
 
 
 class BookingDAO:
+    # занимает и лочит комнату что бы нельзя было заказать одновременно одну и ту же комнату
     @classmethod
-    async def get_room_for_update(
+    async def get_room_for_update(        #
         cls, session: AsyncSession, room_id: int
     ) -> Room | None:
         query = select(Room).where(Room.id == room_id).with_for_update()
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
+    #Сколько номеров уже занято в данном временном диапазоне
     @classmethod
     async def count_booked_rooms(
         cls,
@@ -35,6 +37,7 @@ class BookingDAO:
         result = await session.execute(query)
         return result.scalar_one()
 
+    #Возвращает все брони пользователя
     @classmethod
     async def get_user_bookings(
         cls, session: AsyncSession, user_id: int
@@ -47,6 +50,7 @@ class BookingDAO:
         result = await session.execute(query)
         return list(result.scalars().all())
 
+    #лочит booking пользователя
     @classmethod
     async def get_user_booking_for_update(
         cls,
@@ -62,6 +66,7 @@ class BookingDAO:
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
+    # исчет свободные комнаты тяжелым скьюл запросом с подзапросом
     @classmethod
     async def find_available_rooms(
         cls,
