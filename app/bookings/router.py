@@ -30,8 +30,8 @@ async def search_available_rooms(
     session: AsyncSession = Depends(get_db_session),
 ):
     params = BookingSearchParams(
-        date_from=date_from,
-        date_to=date_to,
+        date_from=date_from.replace(tzinfo=None),
+        date_to=date_to.replace(tzinfo=None),
         guests=guests,
         services=services,
         location=location,
